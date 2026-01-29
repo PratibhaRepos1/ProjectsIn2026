@@ -16,6 +16,10 @@ This workspace contains projects and learning materials for:
 - ✅ Started with JavaScript Basic Understanding
 - ✅ Covered syntax and fundamental concepts
 
+### Day 1
+- ✅ String, Array Understanding
+- ✅ Objects in Javascript
+
 ## Folder Structure
 
 - `Javascript/` - JavaScript exercises and learning materials

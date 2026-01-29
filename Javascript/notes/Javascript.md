@@ -16,4 +16,5 @@ A runtime interprets the code and translates it to machine-level language/code.
 1. **Understanding on how Javascript works**
 2. **Datatypes in Javascript**
 3. **Functions in Javascript**
+4. **Strings, array, objects in Javascript**
 
