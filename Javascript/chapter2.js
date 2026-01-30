@@ -86,3 +86,4 @@ function addStrings(string1='default1', string2='default1') {
 }
 
 addStrings('hello')
+helloWorld()

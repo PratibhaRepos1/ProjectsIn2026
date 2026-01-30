@@ -16,9 +16,13 @@ This workspace contains projects and learning materials for:
 - ✅ Started with JavaScript Basic Understanding
 - ✅ Covered syntax and fundamental concepts
 
-### Day 1
+### Day 2
 - ✅ String, Array Understanding
 - ✅ Objects in Javascript
+
+### Day 3
+- ✅ Scope, closer, modular code
+- ✅ Error handling Techiques in Javascript
 
 ## Folder Structure
 

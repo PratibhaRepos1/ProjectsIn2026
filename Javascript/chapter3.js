@@ -88,3 +88,58 @@ console.log(bio.friends);
 // object.entries
 
 console.log('joke' in bio)
+
+function helloWorld() {
+    let sentence = 'hello world';
+    console.log(sentence)
+}
+
+//clouser
+
+function counter() {
+    let count = 0
+
+    return function() {
+        count++
+        console.log(count)
+    }
+}
+
+let increment = counter()
+
+increment()
+increment()
+
+module.exports = {
+    helloWorld
+}
+
+// error handling techniques
+const brokenObject = {
+    word: 'nice'
+}
+function problemBlock() {
+    try {
+        console.log('Attempted the try block')
+        const sub_object = brokenObject.hello.world
+
+        console.log(sub_object)
+
+    } catch (err) {
+        console.log(err.message)
+    }
+   
+}
+//problemBlock()
+
+
+function throwError() {
+    try{
+        throw new Error('Custom Error Message')
+    } catch(err) {
+        console.log(err.message)
+    }
+    
+}
+throwError()
+console.log('code continue to excute')
