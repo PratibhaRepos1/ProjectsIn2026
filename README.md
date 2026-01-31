@@ -6,6 +6,7 @@ A comprehensive learning repository for web development, AI, and modern framewor
 
 This workspace contains projects and learning materials for:
 - **JavaScript** - Core concepts, syntax, and fundamentals
+- **DSA** - Core concepts, Algorithms, and data structures
 - **TypeScript** - Type-safe JavaScript development
 - **Angular** - Modern web framework
 - **AI Projects** - Machine learning and AI implementations
@@ -24,8 +25,15 @@ This workspace contains projects and learning materials for:
 - ✅ Scope, closer, modular code
 - ✅ Error handling Techiques in Javascript
 
+### Day 4
+- ✅ Practice Array, Objects in JS
+- ✅ Understand Big O in DSA
+- ✅ Frequncy counter Pattern
 ## Folder Structure
 
 - `Javascript/` - JavaScript exercises and learning materials
 - `Typescript/` - TypeScript projects and examples
 - `Angular20/` - Angular framework projects
+- `DSA/` - Data Structures and Algorithms
+  - `notes.md` - DSA concepts and patterns (Big O notation, Frequency Counter Pattern)
+  - `script.js` - DSA algorithm implementations and practice problems
