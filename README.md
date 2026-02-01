@@ -8,7 +8,7 @@ This workspace contains projects and learning materials for:
 - **JavaScript** - Core concepts, syntax, and fundamentals
 - **DSA** - Core concepts, Algorithms, and data structures
 - **TypeScript** - Type-safe JavaScript development
-- **Angular** - Modern web framework
+- **Angular21** - Modern web framework
 - **AI Projects** - Machine learning and AI implementations
 
 ## Progress
@@ -33,7 +33,7 @@ This workspace contains projects and learning materials for:
 
 - `Javascript/` - JavaScript exercises and learning materials
 - `Typescript/` - TypeScript projects and examples
-- `Angular20/` - Angular framework projects
+- `Angular21/` - Angular framework projects : use node version  20.19.0
 - `DSA/` - Data Structures and Algorithms
   - `notes.md` - DSA concepts and patterns (Big O notation, Frequency Counter Pattern)
   - `script.js` - DSA algorithm implementations and practice problems
