@@ -29,6 +29,12 @@ This workspace contains projects and learning materials for:
 - ✅ Practice Array, Objects in JS
 - ✅ Understand Big O in DSA
 - ✅ Frequncy counter Pattern
+
+### Day 5
+- ✅ Created Angular21 App
+- ✅ Understand Angular App structure
+- ✅ String interpolation and interface
+
 ## Folder Structure
 
 - `Javascript/` - JavaScript exercises and learning materials
