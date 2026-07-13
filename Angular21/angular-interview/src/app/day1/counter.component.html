@@ -1,0 +1,5 @@
+<h3>Example 2: Create a counter component with Increment and Decrement buttons. The counter should never go below 0</h3>
+<h3>{{count}}</h3>
+
+<button (click)="increment()">Increment</button>&nbsp;
+<button (click)="decrement()" [disabled]="count === 0">Decrement</button>
