@@ -1,0 +1,71 @@
+from sqlalchemy.orm import Session
+from ..models.conversation import Conversation, Message
+from ..models.business import Business, BusinessSettings
+from ..schemas.chat import ChatMessageRequest, ChatMessageResponse
+from ..rag.pipeline import run_rag
+from fastapi import HTTPException
+
+
+async def handle_message(db: Session, req: ChatMessageRequest) -> ChatMessageResponse:
+    business = db.query(Business).filter(
+        Business.id == req.business_id, Business.status.in_(["active", "trial"])
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    biz_settings = db.query(BusinessSettings).filter(
+        BusinessSettings.business_id == req.business_id
+    ).first()
+
+    conversation = db.query(Conversation).filter(
+        Conversation.business_id == req.business_id,
+        Conversation.session_id == req.session_id,
+        Conversation.status == "open",
+    ).first()
+
+    if not conversation:
+        conversation = Conversation(
+            business_id=req.business_id,
+            session_id=req.session_id,
+            visitor_id=req.visitor_id,
+        )
+        db.add(conversation)
+        db.flush()
+
+    visitor_msg = Message(
+        conversation_id=conversation.id,
+        sender="visitor",
+        content=req.message,
+    )
+    db.add(visitor_msg)
+
+    provider = biz_settings.llm_provider if biz_settings else "groq"
+    model = biz_settings.llm_model if biz_settings else None
+
+    reply, intent, confidence = await run_rag(
+        db=db,
+        business_id=str(req.business_id),
+        message=req.message,
+        llm_provider=provider,
+        llm_model=model,
+    )
+
+    ai_msg = Message(
+        conversation_id=conversation.id,
+        sender="ai",
+        content=reply,
+        intent=intent,
+        confidence=confidence,
+    )
+    db.add(ai_msg)
+    db.commit()
+
+    suggest_lead = intent == "lead" or confidence < 0.3
+
+    return ChatMessageResponse(
+        reply=reply,
+        intent=intent,
+        confidence=confidence,
+        session_id=req.session_id,
+        suggest_lead_capture=suggest_lead,
+    )
