@@ -1,9 +1,10 @@
 from typing import Optional, Any
+from uuid import UUID
 from pydantic import BaseModel
 
 
 class BusinessOut(BaseModel):
-    id: str
+    id: UUID
     name: str
     slug: str
     industry: str

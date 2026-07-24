@@ -1,11 +1,12 @@
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 
 
 class DocumentOut(BaseModel):
-    id: str
-    business_id: str
+    id: UUID
+    business_id: UUID
     filename: str
     file_url: str
     file_type: str

@@ -1,6 +1,7 @@
 from typing import Optional
 from decimal import Decimal
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 
 
@@ -23,8 +24,8 @@ class ProductUpdate(BaseModel):
 
 
 class ProductOut(BaseModel):
-    id: str
-    business_id: str
+    id: UUID
+    business_id: UUID
     name: str
     description: Optional[str]
     price: Optional[Decimal]

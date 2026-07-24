@@ -1,5 +1,6 @@
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 
 
@@ -17,8 +18,8 @@ class LeadUpdate(BaseModel):
 
 
 class LeadOut(BaseModel):
-    id: str
-    business_id: str
+    id: UUID
+    business_id: UUID
     name: str
     email: Optional[str]
     phone: Optional[str]

@@ -1,5 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 
 
@@ -19,7 +20,7 @@ class ChatMessageResponse(BaseModel):
 
 
 class MessageOut(BaseModel):
-    id: str
+    id: UUID
     sender: str
     content: str
     intent: Optional[str]
@@ -30,7 +31,7 @@ class MessageOut(BaseModel):
 
 
 class ConversationOut(BaseModel):
-    id: str
+    id: UUID
     session_id: str
     status: str
     started_at: datetime
