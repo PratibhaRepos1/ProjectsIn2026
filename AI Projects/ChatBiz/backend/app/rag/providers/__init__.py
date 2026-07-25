@@ -8,7 +8,7 @@ from ...core.config import settings
 def get_llm_provider(provider: str = None, model: str = None) -> LLMProvider:
     provider = provider or settings.default_llm_provider
     if provider == "groq":
-        return GroqProvider(model=model or "llama3-8b-8192")
+        return GroqProvider(model=model or "llama-3.1-8b-instant")
     if provider == "gemini":
         return GeminiProvider(model=model or "gemini-1.5-flash")
     if provider == "ollama":

@@ -3,7 +3,7 @@ from ...core.config import settings
 
 
 class GroqProvider(LLMProvider):
-    def __init__(self, model: str = "llama3-8b-8192"):
+    def __init__(self, model: str = "llama-3.1-8b-instant"):
         self.model = model
         self._client = None
 

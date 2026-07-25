@@ -76,7 +76,7 @@ export function SettingsPage() {
               {['groq', 'gemini', 'ollama'].map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
-          <Input label="Model name (optional)" value={form.llm_model || ''} onChange={set('llm_model')} placeholder="e.g. llama3-8b-8192" />
+          <Input label="Model name (optional)" value={form.llm_model || ''} onChange={set('llm_model')} placeholder="e.g. llama-3.1-8b-instant" />
         </div>
       </Card>
 

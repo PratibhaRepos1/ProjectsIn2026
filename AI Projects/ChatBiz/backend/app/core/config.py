@@ -1,5 +1,13 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+# Anchored absolutely (not relative to cwd) so settings load correctly
+# whether the app is started from the repo root, from backend/, or via
+# Docker — pydantic-settings otherwise resolves env_file relative to the
+# process's working directory, which silently falls back to these classes'
+# defaults if that directory doesn't happen to contain a .env of its own.
+_ROOT_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
@@ -27,10 +35,17 @@ class Settings(BaseSettings):
     chunk_overlap: int = 50
     retrieval_top_k: int = 4
 
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # Plain str (not list[str]): pydantic-settings tries to JSON-decode
+    # list-typed fields at the source level, before any validator runs,
+    # which breaks the comma-separated format .env documents for this.
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     class Config:
-        env_file = ".env"
+        env_file = str(_ROOT_ENV_FILE)
         extra = "ignore"
 
 
