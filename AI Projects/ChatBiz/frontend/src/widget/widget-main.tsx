@@ -5,8 +5,13 @@ import resetStyles from './widget.css?inline'
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8000'
 
+// Must capture this synchronously, right now, while the script tag is still
+// actively executing — document.currentScript reverts to null by the time
+// DOMContentLoaded fires below, so reading it inside mount() would be too late.
+const currentScript = document.currentScript as HTMLScriptElement | null
+
 function mount() {
-  const script = document.currentScript as HTMLScriptElement | null
+  const script = currentScript
   const businessId = script?.dataset.business || script?.getAttribute('data-business')
   const primaryColor = script?.dataset.color
   const botName = script?.dataset.botName
