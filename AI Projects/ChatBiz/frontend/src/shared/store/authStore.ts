@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../api/client'
+import { queryClient } from '../queryClient'
 
 interface AuthState {
   token: string | null
@@ -22,17 +23,20 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
+    queryClient.clear()
     localStorage.setItem('chatbiz_token', data.access_token)
     set({ token: data.access_token })
   },
 
   register: async (data) => {
     const res = await api.post('/auth/register', data)
+    queryClient.clear()
     localStorage.setItem('chatbiz_token', res.data.access_token)
     set({ token: res.data.access_token })
   },
 
   logout: () => {
+    queryClient.clear()
     localStorage.removeItem('chatbiz_token')
     set({ token: null })
   },
