@@ -7,9 +7,10 @@ interface Props {
   primaryColor?: string
   welcomeMessage?: string
   botName?: string
+  apiBaseUrl?: string
 }
 
-export function Widget({ businessId, primaryColor = '#6366f1', welcomeMessage, botName = 'Support Chat' }: Props) {
+export function Widget({ businessId, primaryColor = '#6366f1', welcomeMessage, botName = 'Support Chat', apiBaseUrl }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -25,7 +26,7 @@ export function Widget({ businessId, primaryColor = '#6366f1', welcomeMessage, b
               <X size={18} />
             </button>
           </div>
-          <ChatWindow businessId={businessId} primaryColor={primaryColor} welcomeMessage={welcomeMessage} />
+          <ChatWindow businessId={businessId} primaryColor={primaryColor} welcomeMessage={welcomeMessage} apiBaseUrl={apiBaseUrl} />
         </div>
       )}
 

@@ -3,10 +3,13 @@ import { useState } from 'react'
 interface Props {
   businessId: string
   sessionId: string
+  apiBaseUrl?: string
   onSubmitted: () => void
 }
 
-export function LeadForm({ businessId, sessionId, onSubmitted }: Props) {
+const DEFAULT_API_BASE_URL = 'http://localhost:8000'
+
+export function LeadForm({ businessId, sessionId, apiBaseUrl = DEFAULT_API_BASE_URL, onSubmitted }: Props) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [loading, setLoading] = useState(false)
 
@@ -18,7 +21,7 @@ export function LeadForm({ businessId, sessionId, onSubmitted }: Props) {
     if (!form.name) return
     setLoading(true)
     try {
-      await fetch('/api/leads', {
+      await fetch(`${apiBaseUrl}/api/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ business_id: businessId, session_id: sessionId, ...form }),

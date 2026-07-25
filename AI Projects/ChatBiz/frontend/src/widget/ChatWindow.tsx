@@ -11,12 +11,19 @@ interface Props {
   businessId: string
   welcomeMessage?: string
   primaryColor?: string
+  apiBaseUrl?: string
 }
 
 const genSession = () => `sess_${Math.random().toString(36).slice(2, 10)}`
 const SESSION_KEY = 'chatbiz_session'
+const DEFAULT_API_BASE_URL = 'http://localhost:8000'
 
-export function ChatWindow({ businessId, welcomeMessage = 'Hi! How can I help you today?', primaryColor = '#6366f1' }: Props) {
+export function ChatWindow({
+  businessId,
+  welcomeMessage = 'Hi! How can I help you today?',
+  primaryColor = '#6366f1',
+  apiBaseUrl = DEFAULT_API_BASE_URL,
+}: Props) {
   const sessionId = useRef(sessionStorage.getItem(SESSION_KEY) || (() => {
     const s = genSession(); sessionStorage.setItem(SESSION_KEY, s); return s
   })())
@@ -36,7 +43,7 @@ export function ChatWindow({ businessId, welcomeMessage = 'Hi! How can I help yo
     setMessages((m) => [...m, { sender: 'visitor', content: msg }])
     setLoading(true)
     try {
-      const res = await fetch('/api/chat/message', {
+      const res = await fetch(`${apiBaseUrl}/api/chat/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ business_id: businessId, session_id: sessionId.current, message: msg }),
@@ -85,6 +92,7 @@ export function ChatWindow({ businessId, welcomeMessage = 'Hi! How can I help yo
             <LeadForm
               businessId={businessId}
               sessionId={sessionId.current}
+              apiBaseUrl={apiBaseUrl}
               onSubmitted={() => {
                 setShowLeadForm(false)
                 setMessages((m) => [...m, { sender: 'ai', content: "Thanks! We'll be in touch soon." }])

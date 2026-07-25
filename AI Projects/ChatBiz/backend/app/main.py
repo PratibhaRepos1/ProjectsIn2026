@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from .core.config import settings
+from .core.cors import PublicRouteCORSMiddleware
 from .core.database import Base, engine
 from .api import auth, businesses, faqs, documents, products, chat, leads, analytics
 
@@ -18,6 +19,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Wraps the middleware above: lets public widget routes (chat/leads) through
+# from any origin, since those get embedded on client business websites we
+# can't know in advance. Everything else still goes through the restrictive
+# CORSMiddleware configured just above.
+app.add_middleware(PublicRouteCORSMiddleware)
 
 app.include_router(auth.router)
 app.include_router(businesses.router)

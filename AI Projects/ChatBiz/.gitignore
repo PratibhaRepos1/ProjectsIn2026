@@ -16,6 +16,7 @@ test.db
 # Node
 node_modules/
 frontend/dist/
+frontend/public/widget.js
 
 # Uploads
 backend/uploads/

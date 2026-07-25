@@ -1,23 +1,38 @@
 import { createRoot } from 'react-dom/client'
 import { Widget } from './Widget'
-import './widget.css'
+import tailwindStyles from './widget-tailwind.css?inline'
+import resetStyles from './widget.css?inline'
+
+const DEFAULT_API_BASE_URL = 'http://localhost:8000'
 
 function mount() {
   const script = document.currentScript as HTMLScriptElement | null
   const businessId = script?.dataset.business || script?.getAttribute('data-business')
   const primaryColor = script?.dataset.color
   const botName = script?.dataset.botName
+  const apiBaseUrl = script?.dataset.apiUrl || DEFAULT_API_BASE_URL
 
   if (!businessId) {
     console.warn('[ChatBiz] Missing data-business attribute on widget script tag.')
     return
   }
 
-  const container = document.createElement('div')
-  container.id = 'chatbiz-root'
-  document.body.appendChild(container)
-  createRoot(container).render(
-    <Widget businessId={businessId} primaryColor={primaryColor} botName={botName} />
+  // Mounted inside a Shadow DOM so the widget's Tailwind styles never leak onto
+  // (or get overridden by) the host page's own CSS.
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  const shadow = host.attachShadow({ mode: 'open' })
+
+  const style = document.createElement('style')
+  style.textContent = `${tailwindStyles}\n${resetStyles}`
+  shadow.appendChild(style)
+
+  const mountPoint = document.createElement('div')
+  mountPoint.id = 'chatbiz-root'
+  shadow.appendChild(mountPoint)
+
+  createRoot(mountPoint).render(
+    <Widget businessId={businessId} primaryColor={primaryColor} botName={botName} apiBaseUrl={apiBaseUrl} />
   )
 }
 
