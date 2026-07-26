@@ -4,6 +4,7 @@ from typing import List, Tuple, Optional
 from sqlalchemy.orm import Session
 from ..models.document import DocumentChunk
 from ..models.faq import FAQ
+from ..models.product import Product
 from .embeddings import embed_query
 from .providers import get_llm_provider
 
@@ -48,6 +49,25 @@ def retrieve_faqs(db: Session, business_id: str, query: str) -> List[str]:
     return matched[:3]
 
 
+def retrieve_products(db: Session, business_id: str, query: str) -> List[str]:
+    products = (
+        db.query(Product)
+        .filter(Product.business_id == business_id, Product.is_active == True)
+        .all()
+    )
+    query_words = [w for w in query.lower().split() if len(w) > 3]
+    matched = []
+    for product in products:
+        haystack = f"{product.name} {product.category or ''} {product.description or ''}".lower()
+        if any(word in haystack for word in query_words):
+            price = f"{product.price} {product.currency}" if product.price is not None else "price not listed"
+            line = f"Product: {product.name} — {price}"
+            if product.description:
+                line += f"\n{product.description}"
+            matched.append(line)
+    return matched[:5]
+
+
 async def run_rag(
     db: Session,
     business_id: str,
@@ -55,28 +75,29 @@ async def run_rag(
     llm_provider: str = "groq",
     llm_model: Optional[str] = None,
     top_k: int = 4,
-    confidence_threshold: float = 0.35,
+    confidence_threshold: float = 0.25,
+    fallback_message: Optional[str] = None,
+    tone: str = "friendly",
 ) -> Tuple[str, str, float]:
     query_emb = embed_query(message)
     chunks = retrieve_chunks(db, business_id, query_emb, top_k)
     faq_matches = retrieve_faqs(db, business_id, message)
+    product_matches = retrieve_products(db, business_id, message)
 
     best_score = chunks[0][1] if chunks else 0.0
     intent = _detect_intent(message)
 
     context_parts = [c for c, s in chunks if s >= confidence_threshold]
     context_parts.extend(faq_matches)
+    context_parts.extend(product_matches)
     context = "\n\n".join(context_parts)
 
     if not context.strip():
-        return (
-            "I don't have specific information about that right now. Would you like me to connect you with our team?",
-            intent,
-            0.0,
-        )
+        default_fallback = "I don't have specific information about that right now. Would you like me to connect you with our team?"
+        return (fallback_message or default_fallback, intent, 0.0)
 
     provider = get_llm_provider(llm_provider, llm_model)
-    reply = await provider.generate(message, context)
+    reply = await provider.generate(message, context, tone)
     return reply, intent, best_score
 
 

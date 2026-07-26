@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send } from 'lucide-react'
 import { LeadForm } from './LeadForm'
+import { MarkdownText } from './MarkdownText'
 
 interface Message {
   sender: 'visitor' | 'ai'
@@ -71,7 +72,7 @@ export function ChatWindow({
               }`}
               style={msg.sender === 'visitor' ? { backgroundColor: primaryColor } : undefined}
             >
-              {msg.content}
+              {msg.sender === 'ai' ? <MarkdownText text={msg.content} /> : msg.content}
             </div>
           </div>
         ))}

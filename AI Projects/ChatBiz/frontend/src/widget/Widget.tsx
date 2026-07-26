@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageCircle, X } from 'lucide-react'
 import { ChatWindow } from './ChatWindow'
 
@@ -10,8 +10,36 @@ interface Props {
   apiBaseUrl?: string
 }
 
-export function Widget({ businessId, primaryColor = '#6366f1', welcomeMessage, botName = 'Support Chat', apiBaseUrl }: Props) {
+const DEFAULT_API_BASE_URL = 'http://localhost:8000'
+const DEFAULT_WELCOME_MESSAGE = 'Hi! How can I help you today?'
+
+export function Widget({
+  businessId,
+  primaryColor = '#6366f1',
+  welcomeMessage,
+  botName = 'Support Chat',
+  apiBaseUrl = DEFAULT_API_BASE_URL,
+}: Props) {
   const [open, setOpen] = useState(false)
+  const [fetchedWelcomeMessage, setFetchedWelcomeMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${apiBaseUrl}/api/businesses/${businessId}/public-settings`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.welcome_message) setFetchedWelcomeMessage(data.welcome_message)
+      })
+      .catch(() => {
+        // Silently keep the default/prop welcome message if this fails —
+        // never block the widget from opening over a settings fetch error.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [apiBaseUrl, businessId])
+
+  const resolvedWelcomeMessage = fetchedWelcomeMessage ?? welcomeMessage ?? DEFAULT_WELCOME_MESSAGE
 
   return (
     <div className="fixed bottom-5 right-5 z-[9999] flex flex-col items-end gap-3">
@@ -26,7 +54,7 @@ export function Widget({ businessId, primaryColor = '#6366f1', welcomeMessage, b
               <X size={18} />
             </button>
           </div>
-          <ChatWindow businessId={businessId} primaryColor={primaryColor} welcomeMessage={welcomeMessage} apiBaseUrl={apiBaseUrl} />
+          <ChatWindow businessId={businessId} primaryColor={primaryColor} welcomeMessage={resolvedWelcomeMessage} apiBaseUrl={apiBaseUrl} />
         </div>
       )}
 

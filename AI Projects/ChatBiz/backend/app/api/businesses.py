@@ -4,10 +4,27 @@ from ..core.database import get_db
 from ..core.dependencies import get_current_user
 from ..models.user import User
 from ..models.business import Business, BusinessSettings
-from ..schemas.business import BusinessOut, BusinessUpdate, BusinessSettingsOut, BusinessSettingsUpdate
+from ..schemas.business import (
+    BusinessOut,
+    BusinessUpdate,
+    BusinessSettingsOut,
+    BusinessSettingsUpdate,
+    PublicBusinessSettingsOut,
+)
 from fastapi import HTTPException
 
 router = APIRouter(prefix="/api/businesses", tags=["businesses"])
+
+DEFAULT_WELCOME_MESSAGE = "Hi! How can I help you today?"
+
+
+@router.get("/{business_id}/public-settings", response_model=PublicBusinessSettingsOut)
+def get_public_settings(business_id: str, db: Session = Depends(get_db)):
+    # Public, widget-facing: only ever exposes display-safe fields (no contact
+    # info, no LLM provider/model, nothing tenant-sensitive).
+    s = db.query(BusinessSettings).filter(BusinessSettings.business_id == business_id).first()
+    welcome_message = s.welcome_message if s and s.welcome_message else DEFAULT_WELCOME_MESSAGE
+    return PublicBusinessSettingsOut(welcome_message=welcome_message)
 
 
 @router.get("/me", response_model=BusinessOut)

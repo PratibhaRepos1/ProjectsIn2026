@@ -20,7 +20,13 @@ _PUBLIC_PREFIXES = {
 def _is_public(method: str, path: str) -> bool:
     if (method, path) in _PUBLIC_ROUTES:
         return True
-    return any(method == m and path.startswith(prefix) for m, prefix in _PUBLIC_PREFIXES)
+    if any(method == m and path.startswith(prefix) for m, prefix in _PUBLIC_PREFIXES):
+        return True
+    # /api/businesses/{business_id}/public-settings — business_id varies, so
+    # match by shape rather than a fixed prefix.
+    if method == "GET" and path.startswith("/api/businesses/") and path.endswith("/public-settings"):
+        return True
+    return False
 
 
 class PublicRouteCORSMiddleware:

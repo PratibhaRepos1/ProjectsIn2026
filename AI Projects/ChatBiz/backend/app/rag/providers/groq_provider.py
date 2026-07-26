@@ -1,4 +1,4 @@
-from .base import LLMProvider
+from .base import LLMProvider, tone_instruction
 from ...core.config import settings
 
 
@@ -13,11 +13,12 @@ class GroqProvider(LLMProvider):
             self._client = AsyncGroq(api_key=settings.groq_api_key)
         return self._client
 
-    async def generate(self, prompt: str, context: str) -> str:
+    async def generate(self, prompt: str, context: str, tone: str = "friendly") -> str:
         client = self._get_client()
         system = (
             "You are a helpful business assistant. Answer questions using only the provided context. "
-            "If the context doesn't contain enough information, say so politely and offer to connect the user with the team."
+            "If the context doesn't contain enough information, say so politely and offer to connect the user with the team. "
+            f"{tone_instruction(tone)}"
         )
         user_message = f"Context:\n{context}\n\nQuestion: {prompt}"
         response = await client.chat.completions.create(

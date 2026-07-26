@@ -47,12 +47,29 @@ def _extract_text(path: str, file_type: str) -> str:
 
 
 def _chunk_text(text: str, size: int, overlap: int) -> List[str]:
-    words = text.split()
-    chunks, i = [], 0
-    while i < len(words):
-        chunk = " ".join(words[i : i + size])
-        chunks.append(chunk)
-        i += size - overlap
+    # Chunk by line, not by a flat word list — joining an entire document's
+    # words with single spaces destroys row/line structure, which silently
+    # corrupts tabular data (CSV/XLSX rows bleed into each other).
+    lines = text.split("\n")
+    chunks: List[str] = []
+    current: List[str] = []
+    count = 0
+    for line in lines:
+        line_words = len(line.split())
+        if count + line_words > size and current:
+            chunks.append("\n".join(current))
+            tail: List[str] = []
+            tail_count = 0
+            for prev_line in reversed(current):
+                tail_count += len(prev_line.split())
+                tail.insert(0, prev_line)
+                if tail_count >= overlap:
+                    break
+            current, count = tail, tail_count
+        current.append(line)
+        count += line_words
+    if current:
+        chunks.append("\n".join(current))
     return chunks
 
 

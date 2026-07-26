@@ -32,6 +32,13 @@ class BusinessSettingsOut(BaseModel):
         from_attributes = True
 
 
+class PublicBusinessSettingsOut(BaseModel):
+    welcome_message: str
+
+    class Config:
+        from_attributes = True
+
+
 class BusinessSettingsUpdate(BaseModel):
     tone: Optional[str] = None
     welcome_message: Optional[str] = None
