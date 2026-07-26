@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../shared/api/client'
 import { Card } from '../../shared/components/Card'
-import { MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
+import { MessageSquare, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
 interface Message {
@@ -21,11 +21,23 @@ interface Conversation {
 }
 
 export function ConversationsPage() {
+  const qc = useQueryClient()
   const { data: conversations = [] } = useQuery<Conversation[]>({
     queryKey: ['conversations'],
     queryFn: () => api.get('/chat/conversations').then((r) => r.data),
   })
   const [open, setOpen] = useState<string | null>(null)
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/chat/conversations/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      // Deleting a conversation changes message/lead counts and top-question
+      // rankings on the Overview page -- without this it shows stale data
+      // until a manual refresh.
+      qc.invalidateQueries({ queryKey: ['analytics'] })
+    },
+  })
 
   return (
     <div className="space-y-6">
@@ -52,6 +64,18 @@ export function ConversationsPage() {
                 <span className={clsx('text-xs px-2 py-0.5 rounded-full', conv.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
                   {conv.status}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (confirm('Delete this conversation? This cannot be undone.')) {
+                      deleteMut.mutate(conv.id)
+                    }
+                  }}
+                  className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"
+                  aria-label="Delete conversation"
+                >
+                  <Trash2 size={14} />
+                </button>
                 {open === conv.id ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
               </div>
             </button>
