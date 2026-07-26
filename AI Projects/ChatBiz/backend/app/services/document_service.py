@@ -9,7 +9,7 @@ from ..core.config import settings
 from ..rag.embeddings import embed_texts
 
 
-ALLOWED_TYPES = {"pdf", "docx", "txt", "csv"}
+ALLOWED_TYPES = {"pdf", "docx", "txt", "csv", "xlsx"}
 
 
 def _extract_text(path: str, file_type: str) -> str:
@@ -28,6 +28,19 @@ def _extract_text(path: str, file_type: str) -> str:
             import docx
             doc = docx.Document(path)
             return "\n".join(p.text for p in doc.paragraphs)
+        except Exception:
+            return ""
+    if file_type == "xlsx":
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(path, data_only=True)
+            lines = []
+            for sheet in wb.worksheets:
+                for row in sheet.iter_rows(values_only=True):
+                    cells = [str(c) for c in row if c is not None]
+                    if cells:
+                        lines.append(" | ".join(cells))
+            return "\n".join(lines)
         except Exception:
             return ""
     return ""

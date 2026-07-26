@@ -53,12 +53,12 @@ export function DocumentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-sm text-gray-500 mt-1">Upload PDFs, DOCX, or TXT files to train your chatbot.</p>
+          <p className="text-sm text-gray-500 mt-1">Upload PDF, Word, Excel, CSV, or TXT files to train your chatbot.</p>
         </div>
         <Button size="sm" loading={uploadMut.isPending} onClick={() => fileRef.current?.click()}>
           <Upload size={16} className="mr-1" /> Upload
         </Button>
-        <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.csv" className="hidden" onChange={handleFile} />
+        <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.csv,.xlsx" className="hidden" onChange={handleFile} />
       </div>
 
       <div className="space-y-3">
