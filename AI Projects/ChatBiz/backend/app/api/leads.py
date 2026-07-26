@@ -1,8 +1,9 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from ..core.database import get_db
 from ..core.dependencies import get_current_user
+from ..core.limiter import limiter
 from ..models.user import User
 from ..models.lead import Lead
 from ..models.conversation import Conversation
@@ -22,7 +23,8 @@ def list_leads(current_user: User = Depends(get_current_user), db: Session = Dep
 
 
 @router.post("", response_model=LeadOut)
-def create_lead(body: LeadCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def create_lead(request: Request, body: LeadCreate, db: Session = Depends(get_db)):
     conversation_id = None
     if body.session_id:
         conv = db.query(Conversation).filter(

@@ -1,8 +1,9 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session, joinedload
 from ..core.database import get_db
 from ..core.dependencies import get_current_user
+from ..core.limiter import limiter
 from ..models.user import User
 from ..schemas.chat import ChatMessageRequest, ChatMessageResponse, ConversationOut
 from ..services.chat_service import handle_message
@@ -12,7 +13,8 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 @router.post("/message", response_model=ChatMessageResponse)
-async def chat_message(req: ChatMessageRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def chat_message(request: Request, req: ChatMessageRequest, db: Session = Depends(get_db)):
     return await handle_message(db, req)
 
 

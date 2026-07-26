@@ -49,6 +49,11 @@ export function ChatWindow({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ business_id: businessId, session_id: sessionId.current, message: msg }),
       })
+      if (res.status === 429) {
+        setMessages((m) => [...m, { sender: 'ai', content: "You're sending messages a bit too fast — please wait a moment and try again." }])
+        return
+      }
+      if (!res.ok) throw new Error('Request failed')
       const data = await res.json()
       setMessages((m) => [...m, { sender: 'ai', content: data.reply }])
       if (data.suggest_lead_capture) setShowLeadForm(true)
