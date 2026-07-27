@@ -5,6 +5,8 @@ from ..schemas.chat import ChatMessageRequest, ChatMessageResponse
 from ..rag.pipeline import run_rag
 from fastapi import HTTPException
 
+HISTORY_LIMIT = 6
+
 
 async def handle_message(db: Session, req: ChatMessageRequest) -> ChatMessageResponse:
     business = db.query(Business).filter(
@@ -32,6 +34,18 @@ async def handle_message(db: Session, req: ChatMessageRequest) -> ChatMessageRes
         db.add(conversation)
         db.flush()
 
+    # Fetched before adding the current message below, so it naturally
+    # excludes this turn and only contains prior conversation context.
+    history_rows = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.desc())
+        .limit(HISTORY_LIMIT)
+        .all()
+    )
+    history_rows.reverse()
+    history = [{"sender": m.sender, "content": m.content} for m in history_rows]
+
     visitor_msg = Message(
         conversation_id=conversation.id,
         sender="visitor",
@@ -52,6 +66,7 @@ async def handle_message(db: Session, req: ChatMessageRequest) -> ChatMessageRes
         llm_model=model,
         fallback_message=fallback_message,
         tone=tone,
+        history=history,
     )
 
     ai_msg = Message(

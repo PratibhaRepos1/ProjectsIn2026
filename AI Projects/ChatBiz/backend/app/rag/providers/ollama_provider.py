@@ -1,5 +1,6 @@
 import httpx
-from .base import LLMProvider, tone_instruction
+from typing import Dict, List, Optional
+from .base import LLMProvider, system_prompt, format_history
 from ...core.config import settings
 
 
@@ -8,9 +9,16 @@ class OllamaProvider(LLMProvider):
         self.model = model
         self.base_url = settings.ollama_base_url
 
-    async def generate(self, prompt: str, context: str, tone: str = "friendly") -> str:
+    async def generate(
+        self,
+        prompt: str,
+        context: str,
+        tone: str = "friendly",
+        history: Optional[List[Dict[str, str]]] = None,
+    ) -> str:
         full_prompt = (
-            f"You are a helpful business assistant. Use only the context below. {tone_instruction(tone)}\n\n"
+            f"{system_prompt(tone)}\n\n"
+            f"{format_history(history)}"
             f"Context:\n{context}\n\nQuestion: {prompt}\nAnswer:"
         )
         async with httpx.AsyncClient(timeout=60) as client:

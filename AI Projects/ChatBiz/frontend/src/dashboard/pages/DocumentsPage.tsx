@@ -1,9 +1,10 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../shared/api/client'
 import { Card } from '../../shared/components/Card'
 import { Button } from '../../shared/components/Button'
-import { Upload, Trash2, FileText, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Input } from '../../shared/components/Input'
+import { Upload, Trash2, FileText, Link2, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Doc {
   id: string
@@ -22,6 +23,8 @@ const statusIcon = (status: string) => {
 export function DocumentsPage() {
   const qc = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const [url, setUrl] = useState('')
+  const [urlError, setUrlError] = useState('')
 
   const { data: docs = [] } = useQuery<Doc[]>({
     queryKey: ['documents'],
@@ -37,6 +40,19 @@ export function DocumentsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   })
 
+  const urlMut = useMutation({
+    mutationFn: (url: string) => api.post('/documents/from-url', { url }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['documents'] })
+      setUrl('')
+      setUrlError('')
+    },
+    onError: (err: unknown) => {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setUrlError(detail || 'Could not fetch that URL.')
+    },
+  })
+
   const deleteMut = useMutation({
     mutationFn: (id: string) => api.delete(`/documents/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
@@ -46,6 +62,12 @@ export function DocumentsPage() {
     const file = e.target.files?.[0]
     if (file) uploadMut.mutate(file)
     e.target.value = ''
+  }
+
+  const handleFetchUrl = () => {
+    if (!url.trim()) return
+    setUrlError('')
+    urlMut.mutate(url.trim())
   }
 
   return (
@@ -60,6 +82,26 @@ export function DocumentsPage() {
         </Button>
         <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.csv,.xlsx" className="hidden" onChange={handleFile} />
       </div>
+
+      <Card title="Fetch from a web page">
+        <p className="text-sm text-gray-500 mb-3">
+          Import the text content of a single page from your website (e.g. an About or FAQ page) directly into your chatbot's knowledge base.
+        </p>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              placeholder="https://your-site.com/about"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleFetchUrl()}
+            />
+          </div>
+          <Button size="sm" loading={urlMut.isPending} onClick={handleFetchUrl}>
+            <Link2 size={16} className="mr-1" /> Fetch
+          </Button>
+        </div>
+        {urlError && <p className="text-sm text-red-500 mt-2">{urlError}</p>}
+      </Card>
 
       <div className="space-y-3">
         {docs.map((doc) => (

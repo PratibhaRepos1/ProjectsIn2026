@@ -1,7 +1,11 @@
+import ipaddress
 import os
 import json
+import socket
 import uuid
 from typing import List
+from urllib.parse import urlparse
+import httpx
 from sqlalchemy.orm import Session
 from fastapi import UploadFile, HTTPException
 from ..models.document import Document, DocumentChunk
@@ -9,7 +13,8 @@ from ..core.config import settings
 from ..rag.embeddings import embed_texts
 
 
-ALLOWED_TYPES = {"pdf", "docx", "txt", "csv", "xlsx"}
+ALLOWED_TYPES = {"pdf", "docx", "txt", "csv", "xlsx", "url"}
+MAX_URL_FETCH_BYTES = 5 * 1024 * 1024
 
 
 def _extract_text(path: str, file_type: str) -> str:
@@ -73,6 +78,66 @@ def _chunk_text(text: str, size: int, overlap: int) -> List[str]:
     return chunks
 
 
+def _assert_public_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Only http/https URLs are supported")
+    if not parsed.hostname:
+        raise HTTPException(status_code=400, detail="Invalid URL")
+
+    # Basic SSRF guard: a business owner could otherwise point this at
+    # localhost/internal services/cloud metadata endpoints. Resolve the
+    # hostname and reject anything that isn't a genuine public address.
+    try:
+        resolved_ip = socket.gethostbyname(parsed.hostname)
+    except socket.gaierror:
+        raise HTTPException(status_code=400, detail="Could not resolve URL host")
+
+    ip = ipaddress.ip_address(resolved_ip)
+    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+        raise HTTPException(status_code=400, detail="URLs pointing to private/internal addresses are not allowed")
+
+
+async def _fetch_url_text(url: str) -> str:
+    from bs4 import BeautifulSoup
+
+    _assert_public_url(url)
+    async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        try:
+            resp = await client.get(url, headers={"User-Agent": "ChatBizBot/1.0"})
+        except httpx.HTTPError:
+            raise HTTPException(status_code=400, detail="Could not fetch that URL")
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=400, detail=f"URL returned status {resp.status_code}")
+    if len(resp.content) > MAX_URL_FETCH_BYTES:
+        raise HTTPException(status_code=400, detail="Page is too large")
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    for tag in soup(["script", "style", "nav", "footer", "header", "noscript"]):
+        tag.decompose()
+    lines = [line.strip() for line in soup.get_text(separator="\n").splitlines() if line.strip()]
+    return "\n".join(lines)
+
+
+async def ingest_url(db: Session, business_id: str, user_id: str, url: str) -> Document:
+    text = await _fetch_url_text(url)
+
+    doc = Document(
+        business_id=business_id,
+        filename=url,
+        file_url=url,
+        file_type="url",
+        status="processing",
+        uploaded_by=user_id,
+    )
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+
+    _embed_and_store(db, doc, text)
+    return doc
+
+
 async def ingest_document(
     db: Session, business_id: str, user_id: str, file: UploadFile
 ) -> Document:
@@ -107,8 +172,12 @@ async def ingest_document(
 
 
 def _process_document(db: Session, doc: Document, path: str, ext: str):
+    text = _extract_text(path, ext)
+    _embed_and_store(db, doc, text)
+
+
+def _embed_and_store(db: Session, doc: Document, text: str):
     try:
-        text = _extract_text(path, ext)
         chunks = _chunk_text(text, settings.chunk_size, settings.chunk_overlap)
         embeddings = embed_texts(chunks)
 

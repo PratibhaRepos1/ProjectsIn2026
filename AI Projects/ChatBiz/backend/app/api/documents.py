@@ -5,8 +5,8 @@ from ..core.database import get_db
 from ..core.dependencies import get_current_user
 from ..models.user import User
 from ..models.document import Document
-from ..schemas.document import DocumentOut
-from ..services.document_service import ingest_document
+from ..schemas.document import DocumentOut, DocumentFromUrlRequest
+from ..services.document_service import ingest_document, ingest_url
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -23,6 +23,15 @@ async def upload_document(
     db: Session = Depends(get_db),
 ):
     return await ingest_document(db, str(current_user.business_id), str(current_user.id), file)
+
+
+@router.post("/from-url", response_model=DocumentOut)
+async def add_document_from_url(
+    body: DocumentFromUrlRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return await ingest_url(db, str(current_user.business_id), str(current_user.id), body.url)
 
 
 @router.delete("/{doc_id}")

@@ -1,6 +1,6 @@
 import json
 import math
-from typing import List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 from sqlalchemy.orm import Session
 from ..models.document import DocumentChunk
 from ..models.faq import FAQ
@@ -68,6 +68,17 @@ def retrieve_products(db: Session, business_id: str, query: str) -> List[str]:
     return matched[:5]
 
 
+def _build_contextual_query(history: List[Dict[str, str]], message: str) -> str:
+    # A bare follow-up like "and the cappuccino?" has no anchor to what was
+    # actually being asked (price? ingredients?), so retrieval on it alone
+    # tends to score too low to match anything. Prepending the prior visitor
+    # turn gives embedding/keyword matching that missing anchor back.
+    prior_visitor_messages = [h["content"] for h in history if h.get("sender") == "visitor"]
+    if prior_visitor_messages:
+        return f"{prior_visitor_messages[-1]} {message}"
+    return message
+
+
 async def run_rag(
     db: Session,
     business_id: str,
@@ -78,9 +89,17 @@ async def run_rag(
     confidence_threshold: float = 0.25,
     fallback_message: Optional[str] = None,
     tone: str = "friendly",
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> Tuple[str, str, float]:
-    query_emb = embed_query(message)
+    history = history or []
+    search_query = _build_contextual_query(history, message)
+
+    query_emb = embed_query(search_query)
     chunks = retrieve_chunks(db, business_id, query_emb, top_k)
+    # Keyword matching (unlike embeddings) has no similarity threshold to
+    # filter out noise, so it uses the raw current message only -- the
+    # history-augmented search_query caused it to match on a *prior* turn's
+    # keywords and pull in context irrelevant to the current question.
     faq_matches = retrieve_faqs(db, business_id, message)
     product_matches = retrieve_products(db, business_id, message)
 
@@ -97,7 +116,7 @@ async def run_rag(
         return (fallback_message or default_fallback, intent, 0.0)
 
     provider = get_llm_provider(llm_provider, llm_model)
-    reply = await provider.generate(message, context, tone)
+    reply = await provider.generate(message, context, tone, history)
     return reply, intent, best_score
 
 

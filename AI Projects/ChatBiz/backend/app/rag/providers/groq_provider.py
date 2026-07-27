@@ -1,4 +1,5 @@
-from .base import LLMProvider, tone_instruction
+from typing import Dict, List, Optional
+from .base import LLMProvider, system_prompt
 from ...core.config import settings
 
 
@@ -13,20 +14,26 @@ class GroqProvider(LLMProvider):
             self._client = AsyncGroq(api_key=settings.groq_api_key)
         return self._client
 
-    async def generate(self, prompt: str, context: str, tone: str = "friendly") -> str:
+    async def generate(
+        self,
+        prompt: str,
+        context: str,
+        tone: str = "friendly",
+        history: Optional[List[Dict[str, str]]] = None,
+    ) -> str:
         client = self._get_client()
-        system = (
-            "You are a helpful business assistant. Answer questions using only the provided context. "
-            "If the context doesn't contain enough information, say so politely and offer to connect the user with the team. "
-            f"{tone_instruction(tone)}"
-        )
+        system = system_prompt(tone)
         user_message = f"Context:\n{context}\n\nQuestion: {prompt}"
+
+        messages = [{"role": "system", "content": system}]
+        for turn in history or []:
+            role = "user" if turn.get("sender") == "visitor" else "assistant"
+            messages.append({"role": role, "content": turn["content"]})
+        messages.append({"role": "user", "content": user_message})
+
         response = await client.chat.completions.create(
             model=self.model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_message},
-            ],
+            messages=messages,
             max_tokens=512,
         )
         return response.choices[0].message.content

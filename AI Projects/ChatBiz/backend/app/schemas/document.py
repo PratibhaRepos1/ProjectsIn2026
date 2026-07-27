@@ -4,6 +4,10 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
+class DocumentFromUrlRequest(BaseModel):
+    url: str
+
+
 class DocumentOut(BaseModel):
     id: UUID
     business_id: UUID
