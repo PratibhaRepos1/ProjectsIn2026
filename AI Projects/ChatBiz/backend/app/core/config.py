@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     anthropic_api_key: str = ""
 
+    resend_api_key: str = ""
+    notification_from_email: str = "onboarding@resend.dev"
+
     embedding_model: str = "all-MiniLM-L6-v2"
     chunk_size: int = 600
     chunk_overlap: int = 50
